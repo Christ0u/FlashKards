@@ -214,7 +214,6 @@ fun FlashcardFlipCard(
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current.density
 
-    // Réinitialise la rotation à chaque recomposition (donc à chaque nouvelle carte)
     LaunchedEffect(question, answer) {
         rotation.snapTo(0f)
     }
@@ -225,7 +224,7 @@ fun FlashcardFlipCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(340.dp) // Hauteur augmentée
+            .height(340.dp)
             .padding(16.dp)
             .graphicsLayer {
                 rotationY = rot
@@ -250,26 +249,33 @@ fun FlashcardFlipCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()), // Permet le scroll si besoin
+                .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center
         ) {
-            if (!isBack) {
-                Text(
-                    text = question,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFF333366),
-                    modifier = Modifier.padding(24.dp)
-                )
-            } else {
-                Text(
-                    text = answer,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFF6C63FF),
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .graphicsLayer { rotationY = 180f } // Pour remettre le texte à l'endroit
-                )
-            }
+            // Face question
+            Text(
+                text = question,
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFF333366),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .graphicsLayer {
+                        alpha = if (!isBack) 1f else 0f
+                    }
+            )
+            // Face réponse
+            Text(
+                text = answer,
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFF6C63FF),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .graphicsLayer {
+                        rotationY = 180f
+                        alpha = if (isBack) 1f else 0f
+                        cameraDistance = 8 * density
+                    }
+            )
         }
     }
 }
