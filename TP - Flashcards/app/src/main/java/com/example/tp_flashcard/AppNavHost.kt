@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.ProgressBar
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -36,10 +37,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -50,6 +53,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.tp_flashcard.model.FlashCard
 import com.example.tp_flashcard.model.FlashCardCategory
 import kotlinx.coroutines.flow.forEach
+import kotlinx.coroutines.launch
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
@@ -114,26 +118,19 @@ fun HomeScreen(homeViewModel: HomeViewModel = HomeViewModel(),
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun FlashcardScreen(
     uiState: FlashCardUiState,
     onNext: () -> Unit,
     navController: NavController
 ) {
-    var flipped = remember(uiState.index) { mutableStateOf(false) }
-
+    // Retour à l'accueil si session terminée
     LaunchedEffect(uiState.isSessionFinished) {
         if (uiState.isSessionFinished) {
             navController.popBackStack("home", inclusive = false)
         }
     }
-
-    val rotation = animateFloatAsState(
-        targetValue = if (flipped.value) 180f else 0f,
-        animationSpec = tween(durationMillis = 400),
-        label = "flip"
-    )
-    val isBack = rotation.value > 90f
 
     Box(
         modifier = Modifier
@@ -155,29 +152,25 @@ fun FlashcardScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        rotationY = rotation.value
-                        cameraDistance = 16 * density
-                    },
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                FlashcardQuestion(
-                    question = if (!isBack)
-                        uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question"
-                    else
-                        uiState.cardsToStudy.getOrNull(uiState.index)?.answer ?: "Aucune réponse",
-                    // On inverse le texte au dos pour l'effet flip
-                    modifier = if (isBack) Modifier.graphicsLayer { rotationY = 180f } else Modifier,
-                    onClick = { flipped.value = !flipped.value }
-                )
+                AnimatedContent(
+                    targetState = uiState.index,
+                    transitionSpec = {
+                        (slideInHorizontally { width -> width } + fadeIn()) with
+                                (slideOutHorizontally { width -> -width } + fadeOut())
+                    }
+                ) { index ->
+                    FlashcardFlipCard(
+                        question = uiState.cardsToStudy.getOrNull(index)?.question ?: "Aucune question",
+                        answer = uiState.cardsToStudy.getOrNull(index)?.answer ?: "Aucune réponse"
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = {
-                    onNext()
-                    flipped.value = false // Réinitialise la carte pour la suivante
-                },
+                onClick = { onNext() },
                 enabled = !uiState.isSessionFinished,
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
@@ -212,20 +205,43 @@ fun ProgressBar(current: Int, total: Int) {
 }
 
 @Composable
-fun FlashcardQuestion(
+fun FlashcardFlipCard(
     question: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    answer: String
 ) {
+    val rotation = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current.density
+
+    // Réinitialise la rotation à chaque recomposition (donc à chaque nouvelle carte)
+    LaunchedEffect(question, answer) {
+        rotation.snapTo(0f)
+    }
+
+    val rot = rotation.value
+    val isBack = rot > 90f
+
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
             .padding(16.dp)
+            .graphicsLayer {
+                rotationY = rot
+                cameraDistance = 8 * density
+            }
             .clickable(
-                indication = null, // Désactive le grisage/ripple
+                indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            ) { onClick() },
+            ) {
+                coroutineScope.launch {
+                    val target = if (rotation.value < 90f) 180f else 0f
+                    rotation.animateTo(
+                        target,
+                        animationSpec = tween(durationMillis = 400)
+                    )
+                }
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -234,12 +250,23 @@ fun FlashcardQuestion(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = question,
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF333366),
-                modifier = Modifier.padding(24.dp)
-            )
+            if (!isBack) {
+                Text(
+                    text = question,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color(0xFF333366),
+                    modifier = Modifier.padding(24.dp)
+                )
+            } else {
+                Text(
+                    text = answer,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color(0xFF6C63FF),
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .graphicsLayer { rotationY = 180f } // Pour remettre le texte à l'endroit
+                )
+            }
         }
     }
 }
