@@ -11,6 +11,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -36,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -58,9 +58,9 @@ fun FlashcardNavHost(
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
         composable("home") {
             HomeScreen (homeViewModel = homeViewModel,
-                        onCategoryClick = { category: FlashCardCategory ->
-                            navController.navigate("revision/${category.id}")
-                        })
+                onCategoryClick = { category: FlashCardCategory ->
+                    navController.navigate("revision/${category.id}")
+                })
         }
         composable("revision/{categoryId}") { backStackEntry ->
             val categoryId = backStackEntry.arguments?.getString("categoryId")?.toIntOrNull() ?: 0
@@ -85,7 +85,6 @@ fun FlashcardNavHost(
     }
 }
 
-
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel = HomeViewModel(),
@@ -97,22 +96,32 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .background(MaterialTheme.colorScheme.background)
     ) {
         categories.value.forEach { category ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(16.dp)
+                    )
                     .clickable(
-                        indication = null, // Désactive le grisage/ripple
+                        indication = null,
                         interactionSource = remember { MutableInteractionSource() }
                     ) { onCategoryClick(category) },
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Text(
                     text = category.name,
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(24.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -126,7 +135,6 @@ fun FlashcardScreen(
     onNext: () -> Unit,
     navController: NavController
 ) {
-    // Retour à l'accueil si session terminée
     LaunchedEffect(uiState.isSessionFinished) {
         if (uiState.isSessionFinished) {
             navController.popBackStack("home", inclusive = false)
@@ -136,7 +144,7 @@ fun FlashcardScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF6F6FE))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -193,14 +201,14 @@ fun ProgressBar(current: Int, total: Int) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp),
-            color = Color(0xFF6C63FF),
-            trackColor = Color(0xFFE0E0E0)
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "$current / $total",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF6C63FF)
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -242,13 +250,18 @@ fun FlashcardFlipCard(
                     )
                 }
             },
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(24.dp)
+                )
                 .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center
         ) {
@@ -256,7 +269,7 @@ fun FlashcardFlipCard(
             Text(
                 text = question,
                 style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF333366),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .padding(24.dp)
                     .graphicsLayer {
@@ -267,7 +280,7 @@ fun FlashcardFlipCard(
             Text(
                 text = answer,
                 style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF6C63FF),
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .padding(24.dp)
                     .graphicsLayer {
