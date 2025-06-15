@@ -3,6 +3,7 @@ package com.example.tp_flashcard
 import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.ProgressBar
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -103,40 +105,69 @@ fun FlashcardScreen(
     uiState: FlashCardUiState,
     onNext: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Color(0xFFF6F6FE))
     ) {
-        ProgressBar(
-            current = uiState.index + 1,
-            total = uiState.cardsToStudy.size
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        FlashcardQuestion(
-            question = uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question"
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onNext,
-            enabled = !uiState.isSessionFinished
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 0.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Suivant")
+            Spacer(modifier = Modifier.height(32.dp))
+            ProgressBar(
+                current = uiState.index + 1,
+                total = uiState.cardsToStudy.size
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            // La carte prend tout l'espace disponible
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                FlashcardQuestion(
+                    question = uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question"
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            // Le bouton est en bas
+            Button(
+                onClick = onNext,
+                enabled = !uiState.isSessionFinished,
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(56.dp)
+            ) {
+                Text("Suivant", style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Composable
 fun ProgressBar(current: Int, total: Int) {
-    LinearProgressIndicator(
-        progress = { if (total > 0) current / total.toFloat() else 0f },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp),
-    )
-    //Text("$current / $total", modifier = Modifier.align(Alignment.CenterHorizontally))
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        LinearProgressIndicator(
+            progress = { if (total > 0) current / total.toFloat() else 0f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp),
+            color = Color(0xFF6C63FF),
+            trackColor = Color(0xFFE0E0E0)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "$current / $total",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF6C63FF)
+        )
+    }
 }
 
 @Composable
@@ -144,13 +175,22 @@ fun FlashcardQuestion(question: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(180.dp)
             .padding(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Text(
-            text = question,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(24.dp)
-        )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = question,
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFF333366),
+                modifier = Modifier.padding(24.dp)
+            )
+        }
     }
 }
