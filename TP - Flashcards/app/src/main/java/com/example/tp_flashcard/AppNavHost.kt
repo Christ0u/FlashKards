@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -69,7 +71,8 @@ fun FlashcardNavHost(
 
             FlashcardScreen(
                 uiState = uiState,
-                onNext = { flashcardViewModel.nextCard(currentIndex.value) }
+                onNext = { flashcardViewModel.nextCard(currentIndex.value) },
+                navController = navController
             )
         }
     }
@@ -103,8 +106,18 @@ fun HomeScreen(homeViewModel: HomeViewModel = HomeViewModel(),
 @Composable
 fun FlashcardScreen(
     uiState: FlashCardUiState,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    navController: NavController
 ) {
+    var showAnswer = remember(uiState.index) { mutableStateOf(false) }
+
+    // Retour automatique à l'accueil si session terminée
+    LaunchedEffect(uiState.isSessionFinished) {
+        if (uiState.isSessionFinished) {
+            navController.popBackStack("home", inclusive = false)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -122,7 +135,6 @@ fun FlashcardScreen(
                 total = uiState.cardsToStudy.size
             )
             Spacer(modifier = Modifier.height(24.dp))
-            // La carte prend tout l'espace disponible
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -130,13 +142,19 @@ fun FlashcardScreen(
                 contentAlignment = Alignment.Center
             ) {
                 FlashcardQuestion(
-                    question = uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question"
+                    question = if (showAnswer.value)
+                        uiState.cardsToStudy.getOrNull(uiState.index)?.answer ?: "Aucune réponse"
+                    else
+                        uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question",
+                    onClick = { showAnswer.value = !showAnswer.value }
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
-            // Le bouton est en bas
             Button(
-                onClick = onNext,
+                onClick = {
+                    onNext()
+                    showAnswer.value = false // Réinitialise à la question
+                },
                 enabled = !uiState.isSessionFinished,
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
@@ -171,12 +189,13 @@ fun ProgressBar(current: Int, total: Int) {
 }
 
 @Composable
-fun FlashcardQuestion(question: String) {
+fun FlashcardQuestion(question: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
-            .padding(16.dp),
+            .height(220.dp)
+            .padding(16.dp)
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
