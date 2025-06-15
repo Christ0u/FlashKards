@@ -2,7 +2,6 @@ package com.example.tp_flashcard
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -128,7 +127,6 @@ fun HomeScreen(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun FlashcardScreen(
     uiState: FlashCardUiState,
