@@ -3,8 +3,18 @@ package com.example.tp_flashcard
 import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.ProgressBar
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -109,14 +120,20 @@ fun FlashcardScreen(
     onNext: () -> Unit,
     navController: NavController
 ) {
-    var showAnswer = remember(uiState.index) { mutableStateOf(false) }
+    var flipped = remember(uiState.index) { mutableStateOf(false) }
 
-    // Retour automatique à l'accueil si session terminée
     LaunchedEffect(uiState.isSessionFinished) {
         if (uiState.isSessionFinished) {
             navController.popBackStack("home", inclusive = false)
         }
     }
+
+    val rotation = animateFloatAsState(
+        targetValue = if (flipped.value) 180f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "flip"
+    )
+    val isBack = rotation.value > 90f
 
     Box(
         modifier = Modifier
@@ -138,22 +155,28 @@ fun FlashcardScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        rotationY = rotation.value
+                        cameraDistance = 16 * density
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 FlashcardQuestion(
-                    question = if (showAnswer.value)
-                        uiState.cardsToStudy.getOrNull(uiState.index)?.answer ?: "Aucune réponse"
+                    question = if (!isBack)
+                        uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question"
                     else
-                        uiState.cardsToStudy.getOrNull(uiState.index)?.question ?: "Aucune question",
-                    onClick = { showAnswer.value = !showAnswer.value }
+                        uiState.cardsToStudy.getOrNull(uiState.index)?.answer ?: "Aucune réponse",
+                    // On inverse le texte au dos pour l'effet flip
+                    modifier = if (isBack) Modifier.graphicsLayer { rotationY = 180f } else Modifier,
+                    onClick = { flipped.value = !flipped.value }
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = {
                     onNext()
-                    showAnswer.value = false // Réinitialise à la question
+                    flipped.value = false // Réinitialise la carte pour la suivante
                 },
                 enabled = !uiState.isSessionFinished,
                 shape = RoundedCornerShape(24.dp),
@@ -189,13 +212,20 @@ fun ProgressBar(current: Int, total: Int) {
 }
 
 @Composable
-fun FlashcardQuestion(question: String, onClick: () -> Unit) {
+fun FlashcardQuestion(
+    question: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(220.dp)
             .padding(16.dp)
-            .clickable { onClick() },
+            .clickable(
+                indication = null, // Désactive le grisage/ripple
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
