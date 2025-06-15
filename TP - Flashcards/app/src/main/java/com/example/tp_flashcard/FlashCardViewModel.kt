@@ -2,7 +2,6 @@ package com.example.tp_flashcard
 
 import androidx.lifecycle.ViewModel
 import com.example.tp_flashcard.model.FlashCard
-import com.example.tp_flashcard.model.FlashCardCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
