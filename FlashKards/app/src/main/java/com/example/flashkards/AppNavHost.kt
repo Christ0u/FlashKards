@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -45,6 +46,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.flashkards.model.FlashCardCategory
 import kotlinx.coroutines.launch
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
+
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
@@ -90,13 +97,26 @@ fun HomeScreen(
     onCategoryClick: (FlashCardCategory) -> Unit
 ) {
     val categories = homeViewModel.categories.collectAsState()
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    var showCredits by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Titre de l'appli
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(top = 32.dp, bottom = 16.dp)
+        )
+
+        // Liste des catégories
         categories.value.forEach { category ->
             Card(
                 modifier = Modifier
@@ -124,6 +144,34 @@ fun HomeScreen(
                 )
             }
         }
+
+        // Bouton quitter
+        Button(
+            onClick = { backDispatcher?.onBackPressed() },
+            modifier = Modifier.padding(top = 32.dp)
+        ) {
+            Text("Quitter l'application")
+        }
+
+        // Bouton des crédits
+        Button(
+            onClick = { showCredits = true },
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Crédits")
+        }
+    }
+    if (showCredits) {
+        AlertDialog(
+            onDismissRequest = { showCredits = false },
+            title = { Text("Crédits") },
+            text = { Text("Développé par Christopher GERARD\n© 2025 FlashKards") },
+            confirmButton = {
+                TextButton(onClick = { showCredits = false }) {
+                    Text("Fermer")
+                }
+            }
+        )
     }
 }
 
