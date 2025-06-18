@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appName">FlashKards</string>
+    <string name="exitButton">Exit application</string>
+    <string name="creditsButton">Credits</string>
+    <string name="creditsTitle">Credits</string>
+    <string name="credits">Developed by Christopher GERARD\n© 2025 FlashKards</string>
+    <string name="creditsCloseButton">Close</string>
+</resources>

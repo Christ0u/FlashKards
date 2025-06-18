@@ -99,7 +99,7 @@ fun HomeScreen(
     ) {
         // Titre principal de l'application
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.appName),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
@@ -140,7 +140,7 @@ fun HomeScreen(
             onClick = { backDispatcher?.onBackPressed() },
             modifier = Modifier.padding(top = 32.dp)
         ) {
-            Text("Quitter l'application")
+            Text(stringResource(R.string.exitButton))
         }
 
         // Bouton pour afficher la boîte de dialogue des crédits
@@ -148,18 +148,18 @@ fun HomeScreen(
             onClick = { showCredits = true },
             modifier = Modifier.padding(top = 16.dp)
         ) {
-            Text("Crédits")
+            Text(stringResource(R.string.creditsButton))
         }
     }
     // Affiche la boîte de dialogue des crédits si demandé
     if (showCredits) {
         AlertDialog(
             onDismissRequest = { showCredits = false },
-            title = { Text("Crédits") },
-            text = { Text("Développé par Christopher GERARD\n© 2025 FlashKards") },
+            title = { Text(stringResource(R.string.creditsTitle)) },
+            text = { Text(stringResource(R.string.credits)) },
             confirmButton = {
                 TextButton(onClick = { showCredits = false }) {
-                    Text("Fermer")
+                    Text(stringResource(R.string.creditsCloseButton))
                 }
             }
         )
