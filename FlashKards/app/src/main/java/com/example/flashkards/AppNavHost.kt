@@ -13,27 +13,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -47,41 +32,45 @@ import androidx.navigation.compose.rememberNavController
 import com.example.flashkards.model.FlashCardCategory
 import kotlinx.coroutines.launch
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.*
-
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun FlashcardNavHost(
     modifier: Modifier = Modifier,
-    homeViewModel : HomeViewModel
+    homeViewModel: HomeViewModel
 ) {
+    // Contrôleur de navigation pour gérer les écrans
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
         composable("home") {
-            HomeScreen (homeViewModel = homeViewModel,
+            // Écran d'accueil avec la liste des catégories
+            HomeScreen(
+                homeViewModel = homeViewModel,
                 onCategoryClick = { category: FlashCardCategory ->
                     navController.navigate("revision/${category.id}")
-                })
+                }
+            )
         }
         composable("revision/{categoryId}") { backStackEntry ->
+            // Récupère l'id de la catégorie sélectionnée
             val categoryId = backStackEntry.arguments?.getString("categoryId")?.toIntOrNull() ?: 0
+            // Instancie le ViewModel pour la session de révision
             val flashcardViewModel = remember { FlashcardViewModel(categoryId) }
 
+            // Observe les états nécessaires à l'affichage
             val cardsToStudy = flashcardViewModel.cardsToStudy.collectAsState()
             val currentIndex = flashcardViewModel.currentIndex.collectAsState()
             val isSessionFinished = flashcardViewModel.isSessionFinished.collectAsState()
 
+            // Construit l'état UI à partir des flows du ViewModel
             val uiState = FlashCardUiState(
                 index = currentIndex.value,
                 cardsToStudy = cardsToStudy.value,
                 isSessionFinished = isSessionFinished.value
             )
 
+            // Affiche l'écran de révision
             FlashcardScreen(
                 uiState = uiState,
                 onNext = { flashcardViewModel.nextCard(currentIndex.value) },
@@ -96,6 +85,7 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = HomeViewModel(),
     onCategoryClick: (FlashCardCategory) -> Unit
 ) {
+    // Observe la liste des catégories depuis le ViewModel
     val categories = homeViewModel.categories.collectAsState()
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     var showCredits by remember { mutableStateOf(false) }
@@ -107,7 +97,7 @@ fun HomeScreen(
             .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Titre de l'appli
+        // Titre principal de l'application
         Text(
             text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineLarge,
@@ -116,7 +106,7 @@ fun HomeScreen(
                 .padding(top = 32.dp, bottom = 16.dp)
         )
 
-        // Liste des catégories
+        // Affiche chaque catégorie sous forme de carte cliquable
         categories.value.forEach { category ->
             Card(
                 modifier = Modifier
@@ -145,7 +135,7 @@ fun HomeScreen(
             }
         }
 
-        // Bouton quitter
+        // Bouton pour quitter l'application (retour arrière)
         Button(
             onClick = { backDispatcher?.onBackPressed() },
             modifier = Modifier.padding(top = 32.dp)
@@ -153,7 +143,7 @@ fun HomeScreen(
             Text("Quitter l'application")
         }
 
-        // Bouton des crédits
+        // Bouton pour afficher la boîte de dialogue des crédits
         Button(
             onClick = { showCredits = true },
             modifier = Modifier.padding(top = 16.dp)
@@ -161,6 +151,7 @@ fun HomeScreen(
             Text("Crédits")
         }
     }
+    // Affiche la boîte de dialogue des crédits si demandé
     if (showCredits) {
         AlertDialog(
             onDismissRequest = { showCredits = false },
@@ -181,6 +172,7 @@ fun FlashcardScreen(
     onNext: () -> Unit,
     navController: NavController
 ) {
+    // Si la session est terminée, retourne automatiquement à l'accueil
     LaunchedEffect(uiState.isSessionFinished) {
         if (uiState.isSessionFinished) {
             navController.popBackStack("home", inclusive = false)
@@ -199,6 +191,7 @@ fun FlashcardScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
+            // Affiche la progression de la session
             ProgressBar(
                 current = uiState.index + 1,
                 total = uiState.cardsToStudy.size
@@ -210,6 +203,7 @@ fun FlashcardScreen(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
+                // Affiche la carte animée (question/réponse)
                 AnimatedContent(
                     targetState = uiState.index,
                     transitionSpec = {
@@ -224,6 +218,7 @@ fun FlashcardScreen(
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
+            // Bouton pour passer à la carte suivante
             Button(
                 onClick = { onNext() },
                 enabled = !uiState.isSessionFinished,
@@ -241,6 +236,7 @@ fun FlashcardScreen(
 
 @Composable
 fun ProgressBar(current: Int, total: Int) {
+    // Barre de progression et compteur de cartes
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         LinearProgressIndicator(
             progress = { if (total > 0) current / total.toFloat() else 0f },
@@ -264,10 +260,12 @@ fun FlashcardFlipCard(
     question: String,
     answer: String
 ) {
+    // Carte animée qui se retourne pour afficher la réponse
     val rotation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current.density
 
+    // Remet la carte côté question à chaque nouvelle question
     LaunchedEffect(question, answer) {
         rotation.snapTo(0f)
     }
@@ -288,6 +286,7 @@ fun FlashcardFlipCard(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) {
+                // Lance l'animation de flip au clic
                 coroutineScope.launch {
                     val target = if (rotation.value < 90f) 180f else 0f
                     rotation.animateTo(
@@ -311,7 +310,7 @@ fun FlashcardFlipCard(
                 .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center
         ) {
-            // Face question
+            // Face question (visible si la carte n'est pas retournée)
             Text(
                 text = question,
                 style = MaterialTheme.typography.headlineMedium,
@@ -322,7 +321,7 @@ fun FlashcardFlipCard(
                         alpha = if (!isBack) 1f else 0f
                     }
             )
-            // Face réponse
+            // Face réponse (visible si la carte est retournée)
             Text(
                 text = answer,
                 style = MaterialTheme.typography.headlineMedium,

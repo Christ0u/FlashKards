@@ -6,13 +6,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.example.flashkards.ui.theme.FlashKards
 
-class MainActivity : ComponentActivity () {
-    private val homeViewModel : HomeViewModel by viewModels ()
-    override fun onCreate ( savedInstanceState : Bundle ?) {
-        super . onCreate ( savedInstanceState )
+// Classe principale de l'application, héritant de ComponentActivity
+class MainActivity : ComponentActivity() {
+    // Instancie le ViewModel pour gérer les données de l'écran d'accueil
+    private val homeViewModel: HomeViewModel by viewModels()
+
+    // Méthode appelée lors de la création de l'activité
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Définit le contenu de l'interface utilisateur avec Jetpack Compose
         setContent {
             FlashKards {
-                FlashcardNavHost ( homeViewModel = homeViewModel )
+                // Initialise la navigation principale en passant le ViewModel
+                FlashcardNavHost(homeViewModel = homeViewModel)
             }
         }
     }

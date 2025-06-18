@@ -5,17 +5,18 @@ import com.example.flashkards.model.FlashCardCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+// ViewModel responsable de la gestion des catégories de flashcards
 class HomeViewModel : ViewModel() {
 
-    // Propriété privée et mutable, non exposée à l'UI
+    // Propriété privée mutable contenant la liste des catégories (non exposée à l'UI)
     private val _categories = MutableStateFlow<List<FlashCardCategory>>(emptyList())
 
-    // Propriété publique, observable et immuable pour l'UI
+    // Propriété publique immuable, observable par l'UI pour réagir aux changements
     val categories: StateFlow<List<FlashCardCategory>> = _categories
 
-    // Bloc d'initialisation exécuté à la création du ViewModel
+    // Bloc d'initialisation exécuté lors de la création du ViewModel
     init {
-        // Chargement immédiat des catégories depuis le repository
+        // Initialise la liste des catégories à partir du repository
         _categories.value = FlashcardRepository.categories
     }
 }

@@ -3,7 +3,9 @@ package com.example.flashkards
 import com.example.flashkards.model.FlashCard
 import com.example.flashkards.model.FlashCardCategory
 
+// Objet singleton servant de dépôt pour les catégories et les cartes de flashcards
 object FlashcardRepository {
+    // Liste des catégories disponibles
     val categories: List<FlashCardCategory> = listOf(
         FlashCardCategory(id = 1, name = "Capitales"),
         FlashCardCategory(id = 2, name = "Trains et SNCF"),
@@ -11,6 +13,7 @@ object FlashcardRepository {
         FlashCardCategory(id = 4, name = "Anglais")
     )
 
+    // Liste de toutes les cartes de toutes les catégories
     val cards: List<FlashCard> = listOf(
         // Capitales
         FlashCard(1, 1, "Capitale de la France ?", "Paris"),

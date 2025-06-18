@@ -1,6 +1,6 @@
 package com.example.flashkards.model
 
-// Represents a flashcard with a question and its answer
+// Représente une carte de révision avec une question et sa réponse
 data class FlashCard(
     val id: Int,
     val categoryId: Int,
