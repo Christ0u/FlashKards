@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="FlashKardsApp">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-18T20:39:38.462062500Z">
+        <DropdownSelection timestamp="2025-06-18T20:41:07.082369900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\shado\.android\avd\Medium_Phone.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=T8WGNFCMF6XKUOQK" />
             </handle>
           </Target>
         </DropdownSelection>
